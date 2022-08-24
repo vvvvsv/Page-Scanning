@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="zh">
+    <head>
+        <meta charset="UTF-8">
+        <title>校正结果</title>
+        <script type="text/javascript" src="./static/js/jquery-3.6.0.min.js"></script>
+        <script src="./static/js/cut.js"></script>
+        <link rel="stylesheet" href="./static/css/style.css" media="all">
+        <style>
+            .hide{display: none;}
+            a{text-decoration: none;}
+            .but{
+                cursor: pointer;
+                height: 48px;
+                width: 138px;
+                background-color: #4a77d4;
+                border: 2px solid #274d9e;
+                color: #fff;
+                font-size: 22px;
+                line-height: normal;
+                border-radius: 5px;
+                margin: 0 auto;
+            }
+            html{
+                width: 100%;
+                height: 100%;
+                background: url('/static/img/background.jpg') center center / cover rgb(17, 51, 102);
+                background-repeat:no-repeat;
+                background-attachment:fixed;
+            }
+            body{
+                background-size: 700px;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+            h1{font-size: 2em;margin: 0.67em 0;}
+            .show{
+                cursor: pointer;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+            .raw{
+                background: url('/static/img/1.jpg') no-repeat;
+                background-size: 100% 100%;
+            }
+            .radio{border: 3px solid black;padding: 0px 70px;}
+            input.but{margin: 0 10px;width: 120px;background-color: #4a77d4;}
+            .index{
+                text-align: center;
+                border: 4px solid rgb(81, 74, 74);
+                color: #092667;
+                text-shadow:
+                0 0 10px #4a77d4,
+                0 0 11px #4a77d4,
+                0 0 12px #4a77d4,
+                0 0 13px #4a77d4,
+                0 0 14px #4a77d4,
+                0 0 15px #4a77d4
+                ;
+                letter-spacing: 1px;
+            }
+            td.image{
+                width: 375px;
+                height: 500px;
+            }
+            #headButton{
+                margin-left: 183px;
+                height: 48px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div style="text-align: center;"> 
+            <form id="quit" action="/" style="margin-bottom: -140px; margin-top: 90px;">
+                <table id="headButton">
+                    <tr>
+                        <td><input type="submit" value="返回" class="but"></td>
+                        <td><input type="button" value="生成PDF" class="but" id="pdf"></td>
+                        <td><input type="button" value="文字识别" class="but" id="recognition"></td>
+                    </tr>
+                </table>
+            </form>
+            <h1 style="color: aliceblue;font-size: xx-large;">扫描所得文档</h1>
+            <h1 style="color: aliceblue;">左键点击图片进行预览、重新编辑和校正</h1>
+            <h1 style="color: aliceblue;">旋转或重新编辑完成后需刷新以显示新的图片</h1>
+            <table style="margin: 0 auto;background-color: #f0f8ff61;border-radius: 8px;">
+                {{links|safe}} 
+            </table>
+        </div>
+        <div class="theme-popover" style="border-radius: 8px;"> 
+            <div class="theme-poptit">
+                 <a title="关闭" class="close">×</a>
+                 <h3 style="text-align: center;font-size: 16px;">重新选定区域</h3>
+            </div>
+            <div class="theme-popbod dform" >
+                <ol style="margin-top: -70px;text-align: center;">
+                    <li>
+                        <canvas id="c1" width="600" height="600" class="raw"></canvas>
+                        <canvas id="c2" width="600" height="600" class="raw" style="display: none;"></canvas>
+                    </li>
+                    <table style="font-size: 20px;margin: auto;">
+                        <tbody>
+                            <tr>
+                                <td class="radio edit"><input type="radio" name="filter" value="原图">原图</td>
+                                <td class="radio edit"><input type="radio" name="filter" value="灰度">灰度</td>
+                                <td class="radio edit"><input type="radio" name="filter" value="黑白">黑白</td>
+                                <td class="radio edit"><input type="radio" name="filter" value="增亮">增亮</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="padding: 5px 0;" class="radio edit">
+                                    <input type="radio" name="filter" value="推荐滤镜（黑白）">推荐滤镜（黑白）
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="padding: 5px 0;" class="radio edit">
+                                    <input type="radio" name="filter" value="推荐滤镜（彩色）">推荐滤镜（彩色）
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="padding: 5px 0;" class="radio edit">
+                                    锐化:<input type="range" id="sharpness" min="0" max="10" value="0">
+                                    <p id="n" style="display: inline-block;">0</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <li>
+                        <button class="but" id='confirm' value="确认" style=" margin: 5px 15px 5px 15px;">编辑图片</button>
+                        <button class="but" id='recognition_one' value="文字识别" style="margin: 5px 15px 5px 15px;">文字识别</button>
+                        <button class="but" id='download_img' value="下载图片" style="margin: 5px 15px 5px 15px;">下载图片</button>
+                        <span id='buttonbr'><br></span>
+                        <button class="but" id='rotate_img' value="逆时针旋转90度" style="width: 223px; margin: 5px 15px 5px 15px;">逆时针旋转90度</button>
+                        <button class="but close" id='cancel' style="width: 223px; margin: 5px 15px 5px 15px;">取消</button>
+                    </li>
+                </ol>
+            </div>
+       </div>
+       <p style="display: none;" id="res">{{ori_nameList|safe}}</p>
+        <script type="text/javascript">
+            
+            $("input[name='filter']:first").attr('checked','true') //设置初始选择第一个滤镜
+            $('#sharpness').on('input',function() { //获取锐化程度
+                $('#n').html($(this).val());
+            });
+
+            $('button.but').mouseover(function(){ //鼠标移动到按钮上的效果（变色）
+                $(this).css('background-color','#3762bc')
+            })
+            $('button.but').mouseout(function(){
+                $(this).css('background-color','#4a77d4')
+            })
+
+            $('input.but').mouseover(function(){ //同上
+                $(this).css('background-color','#3762bc')
+            })
+            $('input.but').mouseout(function(){
+                $(this).css('background-color','#4a77d4')
+            })
+
+            $("#pdf").click(function(){ //pdf生成
+                //获取res保存的所有图片的名称，空格隔开
+                res=$('#res').html()
+                window.location.href='/pdf?res='+res+'&t='+Math.random()
+            })
+
+            $("#recognition").click(function(){ //文字识别（所有图片）
+                //获取res保存的所有图片的名称，空格隔开
+                res=$('#res').html()
+                window.location.href='/recognition?res='+res+'&t='+Math.random()
+            })
+
+            $("#recognition_one").click(function(){ //文字识别（一张图片）
+                window.location.href='/recognition_one?res='+img_name+'&t='+Math.random()
+            })
+
+            $("#download_img").click(function(){ //下载图片
+                window.location.href='/download_img?res='+img_name+'&t='+Math.random()
+            })
+
+            $("#rotate_img").click(function(){ //旋转图片
+                $.get('/rotate_img',{res:img_name})
+                if(drawUtil_1) drawUtil_1.clear();
+                $('.theme-popover-mask').fadeOut(100);
+                $('.theme-popover').slideUp(200);
+                location.reload(true);
+            })
+
+            img_name='' //图片名字
+            drawUtil_1=null; //画图工具
+            $(document).ready(function() {
+                $('.show').click(function(){
+
+                    img_name=$(this).attr('name')
+                    var tmp_img=new Image()
+                    tmp_img.src=$(this).attr('src')
+                    var new_width=tmp_img.width*700/tmp_img.height //计算出压缩或伸缩后图片的宽度
+
+                    $('h3').html('预览 ' + img_name) 
+                    $('#confirm').html('编辑图片')
+                    $('.edit').attr('hidden','hidden') //先将编辑的选项隐藏起来，进入编辑界面的时候再显示
+
+                    var tmp_url='url('+$(this).attr('src')+')'+' no-repeat' //图片url
+                    $('#c1').css('background',tmp_url)
+                    $('#c1').css('background-size','100% 100%') //以下是画板大小自适应
+                    $('#c1').css('width',new_width)
+                    $('#c1').css('height',700)
+                    $('#c1').attr('width',new_width)
+                    $('#c1').attr('height',700)
+                    $('#c1').attr('name',$(this).attr('name')) 
+
+                    $('#recognition_one').removeAttr('hidden') //将预览界面的按钮显示出来
+                    $('#download_img').removeAttr('hidden')
+                    $('#rotate_img').removeAttr('hidden')
+                    $('#buttonbr').removeAttr('hidden')
+                    $('#cancel').css('width', '223px')
+
+                    $('.theme-popover-mask').fadeIn(100); //覆盖阴影
+                    $('.theme-popover').css('width',new_width+500); //弹窗大小自适应
+                    $('.theme-popover').slideDown(200); //弹出弹窗
+                })
+                $('.close').click(function(){ //关闭弹窗
+                    if(drawUtil_1) drawUtil_1.clear(); //清空画图工具
+                    $('.theme-popover-mask').fadeOut(100);
+                    $('.theme-popover').slideUp(200);
+                })
+
+                $('#confirm').click(function(){
+                    if($(this).html()=='确认') //按下的是确认按钮
+                    {
+                        res=drawUtil_1.result()+$("input[name='filter']:checked").val() //res是编辑图片的选择结果
+                        res+=' '+$('#sharpness').val()
+                        $.post('/submit',{res:res})
+
+                        drawUtil_1.clear();
+                        $('.theme-popover-mask').fadeOut(100); //取消阴影
+                        $('.theme-popover').slideUp(200); //收起弹窗
+
+                        $(this).html('编辑图片')
+                    }
+                    else //按下的是编辑图片按钮
+                    {
+                        var tmp_img=new Image()
+                        tmp_img.src='../static/img/upload/'+img_name
+                        var new_width=tmp_img.width*600/tmp_img.height
+
+                        $('h3').html('重新选定区域 ' + img_name)
+                        $('.edit').removeAttr('hidden')
+
+                        var tmp_url='url(/static/img/upload/'+img_name+')'+' no-repeat' //将图片设为画板背景
+                        $('#c1').css('background',tmp_url)
+                        $('#c1').css('background-size','100% 100%')
+                        $('#c1').css('width',new_width) //同样是画板大小自适应
+                        $('#c1').css('height',600)
+                        $('#c1').attr('width',new_width)
+                        $('#c1').attr('height',600)
+                        $('.theme-popover').css('width',new_width+500);
+
+                        $(this).html('确认')
+                        $('#recognition_one').attr('hidden','hidden')
+                        $('#download_img').attr('hidden','hidden')
+                        $('#rotate_img').attr('hidden','hidden')
+                        $('#buttonbr').attr('hidden','hidden')
+                        $('#cancel').css('width', '138px')
+
+                        drawUtil_1=new DrawingTools(); //DrawingTools为引入的js中的类，用于绘制图案
+                        var start=[img_name,0,0,0,0,0,0,0,0] //start[1:]为最初绘画的四个顶点的坐标
+                        //初始化，(如果浏览器不支持H5，会初始化失败，返回false)
+                        drawUtil_1.init({'id':'c1'})
+                        drawUtil_1.begin(start);//选择画笔
+                    }
+                })
+            })
+
+            // window.onbeforeunload=function(e){
+            //     var e = window.event||e;
+            //     e.returnValue=('');
+            // }
+            
+        </script>
+        <div class="theme-popover-mask"></div><br><br><br><br>
+    </body>
+</html>
